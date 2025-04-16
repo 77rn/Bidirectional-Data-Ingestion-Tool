@@ -49,7 +49,7 @@ router.post("/columns", async (req, res) => {
 });
 
 router.post("/fetch-column-data", async (req, res) => {
-    const { config, tableName, columnNames, limit = 10 } = req.body;
+    const { config, tableName, columnNames, limit } = req.body;
     const { host, port, database, token } = config;
   
     try {
@@ -57,16 +57,19 @@ router.post("/fetch-column-data", async (req, res) => {
       const { username, password } = decoded;
   
       const client = getClickHouseClient(host, port, username, password);
-
+  
       const safeColumns = columnNames.map(col => `\`${col}\``).join(", ");
-      const query = `SELECT ${safeColumns} FROM \`${database}\`.\`${tableName}\` LIMIT ${limit}`;
+      let query = `SELECT ${safeColumns} FROM \`${database}\`.\`${tableName}\``;
+  
+
+      if (limit !== undefined && limit > 0) {
+        query += ` LIMIT ${limit}`;
+      }
   
       const resultSet = await client.query({
         query,
         format: "JSONEachRow"
       });
-
-
   
       const data = await resultSet.json();
       res.status(200).json({ data });
@@ -76,6 +79,7 @@ router.post("/fetch-column-data", async (req, res) => {
       res.status(500).json({ error: "Failed to fetch data" });
     }
   });
+  
   
 
 module.exports = router;

@@ -14,7 +14,6 @@ router.post("/ingest", upload.single("flatFile"), async (req, res) => {
     const source = req.body.source;
     const config = JSON.parse(req.body.config);
     const { host, port, database, delimiter, token, filename } = config;
-    console.log(config);
 
     const decoded = jwt.verify(token, JWT_SECRET);
     const { username, password } = decoded;
