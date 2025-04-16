@@ -8,8 +8,11 @@ const ColumnSelector = ({ source, config, onPreview, onIngestion }) => {
   const [selectedColumns, setSelectedColumns] = useState([]);
   const [previewData, setPreviewData] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-
   const [selectAll, setSelectAll] = useState(false);
+
+  // Row fetch mode
+  const [rowMode, setRowMode] = useState("all");
+  const [rowLimit, setRowLimit] = useState(10);
 
   useEffect(() => {
     const fetchTables = async () => {
@@ -45,6 +48,7 @@ const ColumnSelector = ({ source, config, onPreview, onIngestion }) => {
   useEffect(() => {
     if (selectedTable && selectedColumns.length > 0 && source === "clickhouse") {
       setIsLoading(true);
+      const limit = rowMode === "limit" ? rowLimit : undefined;
       debouncedFetchColumnData(config, selectedTable, selectedColumns, (response) => {
         const cleanData = response.data.map((row) =>
           Object.fromEntries(
@@ -53,15 +57,14 @@ const ColumnSelector = ({ source, config, onPreview, onIngestion }) => {
         );
         setPreviewData(cleanData);
         setIsLoading(false);
-      });
+      }, limit);
     } else {
       setPreviewData([]);
     }
-  }, [selectedColumns, selectedTable, config, source]);
+  }, [selectedColumns, selectedTable, config, source, rowMode, rowLimit]);
 
   const handleTableChange = (e) => {
-    const table = e.target.value;
-    setSelectedTable(table);
+    setSelectedTable(e.target.value);
   };
 
   const toggleColumn = (col) => {
@@ -103,134 +106,146 @@ const ColumnSelector = ({ source, config, onPreview, onIngestion }) => {
   return (
     <div>
       {source === "clickhouse" && (
-        <>
-          <div className="p-6 mt-6 border border-gray-300 rounded-xl shadow-md bg-white">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">Data Control Panel</h2>
+        <div className="p-6 mt-6 border border-gray-300 rounded-xl shadow-md bg-white">
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">Data Control Panel</h2>
 
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Select Table</label>
-              <select
-                value={selectedTable}
-                onChange={handleTableChange}
-                className="w-full p-2 border border-gray-300 rounded-md"
-              >
-                <option value="" disabled>Select a table</option>
-                {tables.map((table, idx) => (
-                  <option key={idx} value={table}>
-                    {table}
-                  </option>
-                ))}
-              </select>
-            </div>
+          {/* Table Selector */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Select Table</label>
+            <select
+              value={selectedTable}
+              onChange={handleTableChange}
+              className="w-full p-2 border border-gray-300 rounded-md"
+            >
+              <option value="" disabled>Select a table</option>
+              {tables.map((table, idx) => (
+                <option key={idx} value={table}>
+                  {table}
+                </option>
+              ))}
+            </select>
+          </div>
 
-            {selectedTable && (
-              <div className="mb-4 p-2 bg-blue-50 border border-blue-200 rounded-md">
-                <p className="text-sm text-blue-800">
-                  <strong>Selected Table:</strong> {selectedTable}
-                </p>
-              </div>
+          {/* Row Limit Option */}
+          <div className="flex items-center gap-4 mb-4">
+            <label className="text-sm font-medium text-gray-700">Row Fetch Mode:</label>
+            <select
+              value={rowMode}
+              onChange={(e) => setRowMode(e.target.value)}
+              className="p-2 border border-gray-300 rounded-md"
+            >
+              <option value="all">All Rows</option>
+              <option value="limit">Limit</option>
+            </select>
+
+            {rowMode === "limit" && (
+              <input
+                type="number"
+                value={rowLimit}
+                onChange={(e) => setRowLimit(Number(e.target.value))}
+                className="p-2 border border-gray-300 rounded-md w-24"
+                min="1"
+              />
             )}
+          </div>
 
-            {columns.length > 0 && (
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Select Columns</label>
-                <div className="max-h-48 overflow-y-auto border border-gray-300 rounded-md p-2">
-                  <label className="flex items-center gap-2 mb-2 font-semibold">
+          {/* Column Selection */}
+          {columns.length > 0 && (
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Select Columns</label>
+              <div className="max-h-48 overflow-y-auto border border-gray-300 rounded-md p-2">
+                <label className="flex items-center gap-2 mb-2 font-semibold">
+                  <input
+                    type="checkbox"
+                    checked={selectAll}
+                    onChange={toggleSelectAll}
+                    className="accent-blue-600"
+                  />
+                  Select All
+                </label>
+                {columns.map((col, idx) => (
+                  <label key={idx} className="flex items-center gap-2 mb-1">
                     <input
                       type="checkbox"
-                      checked={selectAll}
-                      onChange={toggleSelectAll}
+                      checked={selectedColumns.includes(col)}
+                      onChange={() => toggleColumn(col)}
                       className="accent-blue-600"
                     />
-                    Select All
+                    <span className="text-gray-700">{col}</span>
                   </label>
-                  {columns.map((col, idx) => (
-                    <label key={idx} className="flex items-center gap-2 mb-1">
-                      <input
-                        type="checkbox"
-                        checked={selectedColumns.includes(col)}
-                        onChange={() => toggleColumn(col)}
-                        className="accent-blue-600"
-                      />
-                      <span className="text-gray-700">{col}</span>
-                    </label>
-                  ))}
-                </div>
+                ))}
               </div>
-            )}
-
-            <div className="flex flex-wrap gap-4 mb-4">
-              <button
-                onClick={() => onPreview(selectedTable, selectedColumns, previewData)}
-                disabled={!selectedTable || selectedColumns.length === 0}
-                className={`px-4 py-2 ${!selectedTable || selectedColumns.length === 0 ? "bg-gray-400" : "bg-gray-600 hover:bg-gray-700"} text-white rounded-md transition`}
-              >
-                Preview Data
-              </button>
-
-              <button
-                onClick={downloadCSV}
-                disabled={previewData.length === 0}
-                className={`px-4 py-2 ${previewData.length === 0 ? "bg-gray-400" : "bg-green-600 hover:bg-green-700"} text-white rounded-md transition`}
-              >
-                Download as CSV
-              </button>
             </div>
+          )}
 
-            {selectedColumns.length > 0 && (
-              <div className="mt-6 max-h-72 overflow-auto">
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                  Selected Columns Preview
-                  {isLoading && <span className="ml-2 text-sm text-gray-500">(Loading...)</span>}
-                </h3>
+          {/* Buttons */}
+          <div className="flex flex-wrap gap-4 mb-4">
 
-                <div className="overflow-auto border border-gray-300 rounded-md">
-                  <table className="min-w-full text-sm">
-                    <thead>
+            <button
+              onClick={downloadCSV}
+              disabled={previewData.length === 0}
+              className={`px-4 py-2 ${
+                previewData.length === 0 ? "bg-gray-400" : "bg-green-600 hover:bg-green-700"
+              } text-white rounded-md transition`}
+            >
+              Download as CSV
+            </button>
+          </div>
+
+          {/* Preview Table */}
+          {selectedColumns.length > 0 && (
+            <div className="mt-6 max-h-72 overflow-auto">
+              <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                Selected Columns Preview
+                {isLoading && <span className="ml-2 text-sm text-gray-500">(Loading...)</span>}
+              </h3>
+
+              <div className="overflow-auto border border-gray-300 rounded-md">
+                <table className="min-w-full text-sm">
+                  <thead>
+                    <tr>
+                      {selectedColumns.map((col, idx) => (
+                        <th key={idx} className="border px-3 py-1 bg-gray-100 text-left">
+                          {col}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {isLoading ? (
                       <tr>
-                        {selectedColumns.map((col, idx) => (
-                          <th key={idx} className="border px-3 py-1 bg-gray-100 text-left">
-                            {col}
-                          </th>
+                        {selectedColumns.map((_, idx) => (
+                          <td key={idx} className="border px-3 py-1 text-center text-gray-500">
+                            Loading...
+                          </td>
                         ))}
                       </tr>
-                    </thead>
-                    <tbody>
-                      {isLoading ? (
-                        <tr>
-                          {selectedColumns.map((_, idx) => (
-                            <td key={idx} className="border px-3 py-1 text-center text-gray-500">
-                              Loading...
+                    ) : previewData.length > 0 ? (
+                      previewData.map((row, rowIdx) => (
+                        <tr key={rowIdx}>
+                          {selectedColumns.map((col, colIdx) => (
+                            <td key={colIdx} className="border px-3 py-1 text-sm text-gray-700">
+                              {row[col] !== undefined ? String(row[col]).replace(/^"|"$/g, "") : "N/A"}
                             </td>
                           ))}
                         </tr>
-                      ) : previewData.length > 0 ? (
-                        previewData.map((row, rowIdx) => (
-                          <tr key={rowIdx}>
-                            {selectedColumns.map((col, colIdx) => (
-                              <td key={colIdx} className="border px-3 py-1 text-sm text-gray-700">
-                                {row[col] !== undefined ? String(row[col]).replace(/^"|"$/g, "") : "N/A"}
-                              </td>
-                            ))}
-                          </tr>
-                        ))
-                      ) : (
-                        <tr>
-                          <td
-                            colSpan={selectedColumns.length}
-                            className="border px-3 py-1 text-center text-gray-500"
-                          >
-                            No Data Available
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
+                      ))
+                    ) : (
+                      <tr>
+                        <td
+                          colSpan={selectedColumns.length}
+                          className="border px-3 py-1 text-center text-gray-500"
+                        >
+                          No Data Available
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
-            )}
-          </div>
-        </>
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

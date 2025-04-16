@@ -31,17 +31,18 @@ export const fetchTablesFromBackend = async (config) => {
 };
 
 let columnDataTimer;
-export const debouncedFetchColumnData = (config, tableName, columnNames, callback, delay = 1000) => {
+
+export const debouncedFetchColumnData = (config, tableName, columnNames, callback, limit, delay = 1000) => {
   clearTimeout(columnDataTimer);
-  
+
   columnDataTimer = setTimeout(async () => {
     if (!tableName || !columnNames || columnNames.length === 0) {
       callback([]);
       return;
     }
-    
+
     try {
-      const data = await fetchColumnDataFromApi(config, tableName, columnNames);
+      const data = await fetchColumnDataFromApi(config, tableName, columnNames, limit);
       callback(data);
     } catch (error) {
       console.error("Error fetching column data:", error.message);

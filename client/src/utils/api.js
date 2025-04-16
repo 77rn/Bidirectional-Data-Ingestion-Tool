@@ -46,10 +46,11 @@ export const previewData = async (source, flatFile, selectedColumns, delimiter) 
 
 export const startIngestion = async (source, config, flatFile) => {
   try {
-    const formData = new FormData();
+    const { user, password, ...filteredConfig } = config;
 
+    const formData = new FormData();
     formData.append("source", source);
-    formData.append("config", JSON.stringify(config));
+    formData.append("config", JSON.stringify(filteredConfig));
 
     if (source === "flatfile" && flatFile) {
       formData.append("flatFile", flatFile);
@@ -61,10 +62,9 @@ export const startIngestion = async (source, config, flatFile) => {
       },
     });
 
-
     return response;
   } catch (error) {
-    console.log("erorr in ingestion")
+    console.error("Error in ingestion:", error);
     throw new Error("Ingestion failed: " + error.message);
   }
 };
@@ -82,7 +82,6 @@ export const authenticate = async ( config ) => {
 
 export const fetchClickHouseTables = async (config) => {
   const { host, port, database, user, token } = config;
-  console.log(config);
 
   const response = await axios.post(`${BACKEND_URL}/clickhouse/tables`, {
     host,
@@ -110,12 +109,15 @@ export const fetchClickHouseColumns = async (config, table) => {
   return response.data;
 };
 
-export const fetchColumnDataFromApi = async (config, tableName, columnNames, limit = 10) => {
+export const fetchColumnDataFromApi = async (config, tableName,columnNames,limit) => {
+  const { username, password, ...filteredConfig } = config;
+
   const response = await axios.post(`${BACKEND_URL}/clickhouse/fetch-column-data`, {
-    config,
+    config: filteredConfig,
     tableName,
     columnNames,
     limit
   });
+  
   return response.data;
 };
