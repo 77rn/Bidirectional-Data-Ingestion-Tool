@@ -1,20 +1,10 @@
 import axios from 'axios';
 
-const BACKEND_URL = "http://localhost:4000"; // Backend URL
+const BACKEND_URL = "http://localhost:4000";
 
 export const loadColumns = async (source, config, selectedTable, flatFile, delimiter) => {
   try {
-    if (source === "clickhouse") {
-      const response = await axios.post(`${BACKEND_URL}/clickhouse/columns`, {
-        host: config.host,
-        port: config.port,
-        database: config.database,
-        user: config.user,
-        token: config.token,
-        table: selectedTable,
-      });
-      return response.data.columns;
-    } else if (source === "flatfile" && flatFile) {
+    if (source === "flatfile" && flatFile) {
       const formData = new FormData();
       const { filename } = config;
       formData.append("file", flatFile);
@@ -31,6 +21,7 @@ export const loadColumns = async (source, config, selectedTable, flatFile, delim
   }
 };
 
+
 export const previewData = async (source, flatFile, selectedColumns, delimiter) => {
   try {
     if (source === "flatfile" && flatFile) {
@@ -38,6 +29,7 @@ export const previewData = async (source, flatFile, selectedColumns, delimiter) 
       formData.append("file", flatFile);
       formData.append("delimiter", delimiter);
       formData.append("columns", JSON.stringify(selectedColumns));
+
 
       const response = await axios.post(`${BACKEND_URL}/flatfile/preview`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
@@ -50,6 +42,7 @@ export const previewData = async (source, flatFile, selectedColumns, delimiter) 
     throw new Error("Preview failed: " + error.message);
   }
 };
+
 
 export const startIngestion = async (source, config, flatFile) => {
   try {
@@ -77,12 +70,52 @@ export const startIngestion = async (source, config, flatFile) => {
 };
 
 
-export const authenticate = async () => {
+export const authenticate = async ( config ) => {
   try {
-    const res = await axios.post(`${BACKEND_URL}/auth`);
+    const res = await axios.post(`${BACKEND_URL}/auth`, config);
     return res.data.token;
   } catch (error) {
     console.error("Authentication error:", error.message);
     throw new Error("Authentication failed");
   }
+};
+
+export const fetchClickHouseTables = async (config) => {
+  const { host, port, database, user, token } = config;
+  console.log(config);
+
+  const response = await axios.post(`${BACKEND_URL}/clickhouse/tables`, {
+    host,
+    port,
+    database,
+    user,
+    token
+  });
+
+  return response.data;
+};
+
+export const fetchClickHouseColumns = async (config, table) => {
+  const { host, port, database, user, token } = config;
+
+  const response = await axios.post(`${BACKEND_URL}/clickhouse/columns`, {
+    host,
+    port,
+    database,
+    user,
+    token,
+    table
+  });
+
+  return response.data;
+};
+
+export const fetchColumnDataFromApi = async (config, tableName, columnNames, limit = 10) => {
+  const response = await axios.post(`${BACKEND_URL}/clickhouse/fetch-column-data`, {
+    config,
+    tableName,
+    columnNames,
+    limit
+  });
+  return response.data;
 };

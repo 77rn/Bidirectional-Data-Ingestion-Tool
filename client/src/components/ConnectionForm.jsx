@@ -22,7 +22,10 @@ const ConnectionForm = ({ source, config, setConfig, setFlatFile }) => {
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files.length > 0) {
-      setFlatFile(e.target.files[0]);
+      const file = e.target.files[0];
+      setFlatFile(file);
+      const nameWithoutExt = file.name.replace(/\.[^/.]+$/, "");
+      setConfig((prev) => ({ ...prev, filename: nameWithoutExt }));
     }
   };
 
