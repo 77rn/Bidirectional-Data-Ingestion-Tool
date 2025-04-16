@@ -1,0 +1,11 @@
+1. Connect to ClickHouse using Node.js with authentication and fetch tables from a specific database.
+2. Preview selected columns from a ClickHouse table with row limits and secure access via JWT token.
+3. Dynamically create dropdowns for columns based on the selected data source whether it’s a CSV file or a ClickHouse table.
+4. Create an API that parses CSV files and returns the column names from the headers.
+5. Implement debounced logic to delay fetching or previewing data until the user stops typing or selecting.
+6. Allow form fields to be editable before login and make them read only once the user is authenticated.
+7. Secure all routes with JWT authentication, ensuring only valid tokens grant access.
+8. Build a real time table preview that updates dynamically based on user-selected columns and data source.
+9. Write a reusable API utility api.js to handle frontend API calls, including JWT token headers.
+10. Add logging on the backend to track and debug each step of CSV ingestion into ClickHouse.
+11. Automatically generate ClickHouse tables based on the CSV structure before inserting any data.
