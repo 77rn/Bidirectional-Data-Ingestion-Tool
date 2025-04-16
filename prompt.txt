@@ -1,11 +1,32 @@
-1. Connect to ClickHouse using Node.js with authentication and fetch tables from a specific database.
-2. Preview selected columns from a ClickHouse table with row limits and secure access via JWT token.
-3. Dynamically create dropdowns for columns based on the selected data source whether it’s a CSV file or a ClickHouse table.
-4. Create an API that parses CSV files and returns the column names from the headers.
-5. Implement debounced logic to delay fetching or previewing data until the user stops typing or selecting.
-6. Allow form fields to be editable before login and make them read only once the user is authenticated.
-7. Secure all routes with JWT authentication, ensuring only valid tokens grant access.
-8. Build a real time table preview that updates dynamically based on user-selected columns and data source.
-9. Write a reusable API utility api.js to handle frontend API calls, including JWT token headers.
-10. Add logging on the backend to track and debug each step of CSV ingestion into ClickHouse.
-11. Automatically generate ClickHouse tables based on the CSV structure before inserting any data.
+1. Connect to ClickHouse Easily
+Make a reusable setup that connects to ClickHouse using details (like host, port, username, and password) stored safely in .env files.
+
+2. Dropdown to Pick Table Columns
+In your React app, show a dropdown where users can select which columns they want to work with. This list should come from ClickHouse.
+
+3. Wait Before Sending Backend Requests
+If a user quickly changes their selection (table or columns), wait a bit before hitting the backend — so you don’t send too many unnecessary calls.
+
+4. Preview Table Data
+On the backend, create an API where you give a table name and the columns you want — and it sends back 100 rows from ClickHouse as a preview.
+
+5. Secure with Login Tokens (JWT)
+Protect all ClickHouse-related routes by checking if the user is logged in properly using a JWT token. If not, block access.
+
+6. Read CSV Header Columns
+Build a backend function that reads the first row (headers) of an uploaded CSV file and sends them back to the frontend.
+
+7. Flexible Table View in React
+Build a React component that shows any table data it receives, no hardcoding of column names or data structure.
+
+8. Reset Data on Source Switch
+In React, when a user changes between CSV and ClickHouse, clear all previews, columns, and files so there’s no confusion.
+
+9. Organize Code Cleanly
+Keep your client and server files neat. Use folders like routes, utils to separate different parts of your app.
+
+10. Smart SELECT Query
+Write backend logic that builds a SQL SELECT statement from the columns the user picked and only brings back 100 rows max.
+
+11. Preview CSV Without Full Load
+Read and show the first 100 rows of a CSV file using a stream without loading the whole file into memory.
