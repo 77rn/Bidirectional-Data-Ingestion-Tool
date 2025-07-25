@@ -60,7 +60,7 @@ npm start
 - Delivers a complete backend API covering everything from user authentication to data import.
 - Secures all database operations with JWT-based authentication.
 - Handles errors gracefully, whether it’s an authentication issue, a query failure, or a problem with file processing.
-- Streamlines the entire process from selecting and previewing data to importing it smoothly into ClickHouse.
+- Streamlines the entire process from selecting and previewing data to importing it smoothly into ClickHouse
 
 ## Demo Video
 
